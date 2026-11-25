@@ -30,6 +30,8 @@ Everything lives under `C:\DevTools` and is read-only for normal users:
 - **Common tools from winget**, installed machine-wide: Git, Node.js, GitHub CLI, VS Code,
   CMake, Ninja, FFmpeg, ripgrep, jq, LibreOffice, Pandoc and Tesseract (with English, Vietnamese,
   Japanese and Chinese data).
+- **The Claude and Codex desktop apps for every account.** They're provisioned machine-wide, so
+  each person gets them at sign-in, including accounts created later.
 - **Instructions for the agents themselves**, so Claude Code and Codex know the environment is
   there and don't start installing their own copies.
 
@@ -78,11 +80,11 @@ A few other switches you might want:
 - `-PrivateCaches` keeps caches per user and shares only Python itself.
 - `-SharedRepoRoots D:\Projects` marks a folder of shared repos as a git `safe.directory`.
 - `-InstallBuildTools` adds the Visual Studio C++ build tools.
-- `-SkipAgentEnv` / `-SkipAgentInstructions` skip those parts of the install.
+- `-SkipAgentEnv`, `-SkipAgentInstructions` and `-SkipDesktopApps` skip those parts of the install.
 
 ## How it's organized
 
-`Install-DevTools.ps1` is the only script you normally run. It calls three others:
+`Install-DevTools.ps1` is the only script you normally run. It calls four others:
 
 - `Setup-DevTools.ps1` does the heavy lifting: uv, Python, the shared caches and their
   permissions, environment variables, winget packages and a few Windows and Git settings. Every
@@ -93,6 +95,9 @@ A few other switches you might want:
 - `Install-AgentInstructions.ps1` copies `agent-instructions.md` into Claude Code's machine-wide
   `CLAUDE.md` and into the `AGENTS.md` of every user who uses Codex. It only touches its own
   marked block, so anything people wrote there themselves stays put.
+- `Install-DesktopApps.ps1` downloads the Claude and Codex MSIX packages through winget and
+  provisions them for all accounts. These apps keep themselves up to date, so it installs the
+  latest version rather than a pinned one. `-Remove` stops provisioning them for new accounts.
 
 `Test-DevTools.ps1` checks a single account, including a quick end-to-end run that creates Office
 files and PDFs, runs OCR, converts documents with LibreOffice and opens a page in Chromium.
@@ -119,6 +124,9 @@ so don't edit that copy directly.
 - **Encoding.** On machines with a non-UTF-8 locale (Japanese Windows uses cp932, for example),
   Python defaults to that code page and mangles Vietnamese or Chinese text. The setup turns on
   Python's UTF-8 mode machine-wide.
+- **Claude's Cowork can't be shared.** The app is shared, but Cowork runs a small VM whose disk
+  (several GB, in `%LOCALAPPDATA%\Claude-Data`) is created per user the first time they turn it
+  on, and holds that person's own session data. Users who never use Cowork never pay for it.
 - **Tesseract data.** For Vietnamese, the standard models were noticeably more accurate than the
   "fast" ones. For Japanese and Chinese it was the other way round, so each language uses the
   variant that did better in testing.

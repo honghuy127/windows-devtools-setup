@@ -171,6 +171,16 @@ if (Test-Path -LiteralPath $agentPy) {
     }
 }
 
+# Install-DesktopApps.ps1 records which apps it provisioned; they are registered at sign-in.
+$desktopState = Join-Path $root '.desktop-apps.json'
+if (Test-Path -LiteralPath $desktopState) {
+    $desktop = @((Get-Content -LiteralPath $desktopState -Raw | ConvertFrom-Json).Packages)
+    Test-Step "Desktop apps registered for this account ($($desktop -join ', '))" {
+        $missing = @($desktop | Where-Object { !(Get-AppxPackage -Name $_ -ErrorAction SilentlyContinue) })
+        if ($missing.Count) { throw "not registered yet: $($missing -join ', ') (sign out/in once after provisioning)" }
+    }
+}
+
 Test-Step 'Agent instructions (Claude Code managed CLAUDE.md, Codex AGENTS.md)' {
     $marker = 'BEGIN DevTools shared environment'
     $claudeMd = Join-Path $env:ProgramFiles 'ClaudeCode\CLAUDE.md'

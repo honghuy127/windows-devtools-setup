@@ -93,7 +93,7 @@ $BootstrapFiles = @('Setup-DevTools.ps1', 'Test-DevTools.ps1')
 $BootstrapDir = 'setup'
 # Kit contents (copied into $root\setup when the kit is run from somewhere else).
 $KitItems = @('Install-DevTools.ps1', 'Setup-DevTools.ps1', 'Install-AgentEnv.ps1', 'Install-AgentInstructions.ps1',
-    'Test-DevTools.ps1', 'agent-instructions.md', 'README.md', 'agent-env')
+    'Install-DesktopApps.ps1', 'Test-DevTools.ps1', 'agent-instructions.md', 'README.md', 'agent-env')
 # winget exit codes treated as success: 0, already installed (0x8A150061), no applicable upgrade (0x8A15002B).
 $WingetOkCodes = @(0, -1978335135, -1978335189)
 
