@@ -1,0 +1,41 @@
+# Shared venv for AI agents & users: C:\DevTools\envs\agent
+# Install/update: C:\DevTools\setup\Install-AgentEnv.ps1 (admin). To add/remove packages, edit the list
+# below, then run that script with -Relock (keeps current versions of the others) or -Upgrade (bumps all).
+[project]
+name = "devtools-agent-env"
+version = "1.0.0"
+description = "Shared Python toolkit for AI agents and users (C:\\DevTools\\envs\\agent)"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    # --- Office ---
+    "python-docx",        # Word .docx
+    "openpyxl",           # Excel .xlsx read/write, formulas, formatting
+    "xlsxwriter",         # Excel .xlsx fast writing, charts
+    "xlrd",               # legacy Excel .xls
+    "python-pptx",        # PowerPoint .pptx
+    "markitdown[docx,pptx,xlsx,xls,pdf,outlook]",  # Office/PDF/HTML -> Markdown for LLMs
+    # --- PDF ---
+    "pypdf",              # split/merge/rotate/read PDF
+    "pdfplumber",         # extract text + tables
+    "pypdfium2",          # render PDF -> images (no poppler needed)
+    "reportlab",          # create PDF
+    "pytesseract",        # OCR (system Tesseract: eng, vie, jpn, chi_*)
+    # --- Web ---
+    "playwright",         # headless browser (Chromium in the shared cache)
+    "requests",
+    "httpx",
+    "beautifulsoup4",
+    "lxml",
+    "trafilatura",        # extract the main content of web pages
+    "markdownify",        # HTML -> Markdown
+    # --- Data / images / charts ---
+    "pandas",
+    "numpy",
+    "pillow",
+    "matplotlib",
+    # --- Utilities ---
+    "pyyaml",
+    "jinja2",
+    "python-dateutil",
+    "tabulate",
+]

@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  powershell:
+    name: PowerShell (5.1 + 7) syntax, encoding, analyzer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: UTF-8 BOM on scripts with non-ASCII text (Windows PowerShell 5.1)
+        shell: pwsh
+        run: |
+          $bad = Get-ChildItem -Recurse -Include *.ps1,*.psm1,*.psd1 -File | Where-Object {
+            $b = [IO.File]::ReadAllBytes($_.FullName)
+            $hasBom = $b.Length -ge 3 -and $b[0] -eq 0xEF -and $b[1] -eq 0xBB -and $b[2] -eq 0xBF
+            -not $hasBom -and ($b | Where-Object { $_ -gt 0x7F } | Select-Object -First 1)
+          }
+          if ($bad) { $bad | ForEach-Object { "::error file=$($_.Name)::non-ASCII content without UTF-8 BOM" }; exit 1 }
+
+      - name: Parse with PowerShell 7
+        shell: pwsh
+        run: |
+          $failed = $false
+          Get-ChildItem -Recurse -Filter *.ps1 -File | ForEach-Object {
+            $t = $null; $e = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$t, [ref]$e)
+            foreach ($err in $e) { "::error file=$($_.Name),line=$($err.Extent.StartLineNumber)::$($err.Message)"; $failed = $true }
+          }
+          if ($failed) { exit 1 }
+
+      - name: Parse with Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $failed = $false
+          Get-ChildItem -Recurse -Filter *.ps1 -File | ForEach-Object {
+            $t = $null; $e = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$t, [ref]$e)
+            foreach ($err in $e) { "::error file=$($_.Name),line=$($err.Extent.StartLineNumber)::$($err.Message)"; $failed = $true }
+          }
+          if ($failed) { exit 1 }
+
+      - name: PSScriptAnalyzer (errors fail the build, warnings are reported)
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck
+          $r = Invoke-ScriptAnalyzer -Path . -Recurse -Severity Error, Warning `
+            -ExcludeRule PSAvoidUsingWriteHost, PSUseShouldProcessForStateChangingFunctions, PSUseSingularNouns
+          foreach ($i in $r) {
+            $level = if ($i.Severity -eq 'Error') { 'error' } else { 'warning' }
+            "::$level file=$($i.ScriptName),line=$($i.Line)::[$($i.RuleName)] $($i.Message)"
+          }
+          if ($r | Where-Object Severity -eq 'Error') { exit 1 }
+
+  agent-env:
+    name: Agent env lockfile and smoke script
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
+        with:
+          version: "0.13.10"   # keep in sync with $Pinned.Uv in Setup-DevTools.ps1
+
+      - name: uv.lock is up to date with pyproject.toml
+        run: uv lock --check --project agent-env --python 3.13
+
+      - name: Smoke script compiles
+        run: uv run --no-project --python 3.13 python -m py_compile agent-env/smoke_agent_env.py
+
+      - name: Uv pin matches CI
+        shell: pwsh
+        run: |
+          $m = Select-String -Path Setup-DevTools.ps1 -Pattern "^\s*Uv\s*=\s*'([^']+)'" | Select-Object -First 1
+          if ($m.Matches[0].Groups[1].Value -ne '0.13.10') { "::error file=Setup-DevTools.ps1::`$Pinned.Uv ($($m.Matches[0].Groups[1].Value)) != uv version in ci.yml"; exit 1 }

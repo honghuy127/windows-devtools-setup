@@ -1,0 +1,14 @@
+# Logs / transcripts
+*.log
+# Backups written by Install-AgentInstructions.ps1, partial downloads
+*.bak
+*.download
+# Python
+__pycache__/
+*.pyc
+.venv/
+# Editors / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

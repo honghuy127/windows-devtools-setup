@@ -1,0 +1,13 @@
+* text=auto
+
+# PowerShell: CRLF on checkout (Windows PowerShell 5.1 friendly)
+*.ps1   text eol=crlf
+*.psm1  text eol=crlf
+*.psd1  text eol=crlf
+
+*.md    text eol=lf
+*.py    text eol=lf
+*.toml  text eol=lf
+*.lock  text eol=lf linguist-generated=true
+*.yml   text eol=lf
+*.yaml  text eol=lf
