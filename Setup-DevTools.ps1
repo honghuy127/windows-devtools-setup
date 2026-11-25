@@ -1,5 +1,7 @@
 ﻿#Requires -Version 5.1
 #Requires -RunAsAdministrator
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'WriterMembers',
+    Justification = 'Used inside Initialize-WritersGroup via script scope.')]
 [CmdletBinding()]
 param(
     [switch]$ShareCaches,

@@ -10,6 +10,8 @@ Puts the shared-environment instructions (agent-instructions.md) into:
 Content lives in a BEGIN/END block; reruns replace only that block and keep the user's own text.
   -Remove : remove the block from all of the files above.
 #>
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSReviewUnusedParameter', 'Remove',
+    Justification = 'Used inside Update-Block via script scope.')]
 [CmdletBinding()]
 param(
     [string[]]$Users = @(),
