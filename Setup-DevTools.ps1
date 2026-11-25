@@ -133,6 +133,8 @@ function Invoke-Checked([string]$Exe, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "$Exe $($Arguments -join ' ') failed (exit $LASTEXITCODE)" }
 }
 function Get-CheckedOutput([string]$Exe, [string[]]$Arguments) {
+    # PS 5.1 turns redirected stderr lines into errors, which 'Stop' would make fatal; rely on the exit code.
+    $ErrorActionPreference = 'Continue'
     $out = (& $Exe @Arguments 2>&1 | Out-String).Trim()
     if ($LASTEXITCODE -ne 0) { throw "$Exe $($Arguments -join ' ') failed (exit $LASTEXITCODE): $out" }
     $out
@@ -346,7 +348,8 @@ try {
     # already installed as good enough and never bumps the patch when uv is upgraded.
     $json = (& $uv --no-config python list $Pinned.Python --only-downloads --output-format json | Out-String)
     if ($LASTEXITCODE -ne 0) { throw "uv python list failed (exit $LASTEXITCODE)" }
-    $downloads = @($json | ConvertFrom-Json | Where-Object { $_.implementation -eq 'cpython' -and $_.variant -eq 'default' })
+    # Parentheses: on PS 5.1 ConvertFrom-Json emits a JSON array as ONE object; this enumerates it.
+    $downloads = @(($json | ConvertFrom-Json) | Where-Object { $_.implementation -eq 'cpython' -and $_.variant -eq 'default' })
     if (!$downloads.Count) { throw "uv $($Pinned.Uv) has no CPython download matching $($Pinned.Python)" }
     $pythonResolved = $downloads[0].version
     Write-Host "Python $($Pinned.Python) -> $pythonResolved"

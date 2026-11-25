@@ -141,7 +141,8 @@ $shPath = '/' + ($agentPy.Substring(0, 1).ToLowerInvariant()) + ($agentPy.Substr
 # ---------------------------------------------------------------------------
 # 5. Summary
 # ---------------------------------------------------------------------------
-$pkgCount = @(& $uv --no-config pip list --python $agentPy --format freeze 2>$null).Count
+# Count installed distributions directly (uv pip list prints to stderr, which PS 5.1 shows as an error).
+$pkgCount = @(Get-ChildItem -LiteralPath (Join-Path $envDir 'Lib\site-packages') -Directory -Filter '*.dist-info').Count
 $sizeMb = (Get-ChildItem -LiteralPath $envDir -Recurse -File -Force | Measure-Object Length -Sum).Sum / 1MB
 Write-Host ("Agent env ready: {0} ({1} packages, {2:N0} MB)" -f $envDir, $pkgCount, $sizeMb)
 Write-Host 'Use: python script.py (default)  |  agent-python script.py  |  "$DEVTOOLS_AGENT_PYTHON" script.py'
