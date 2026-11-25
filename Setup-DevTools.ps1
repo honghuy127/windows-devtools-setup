@@ -191,8 +191,10 @@ function Install-WingetPackage([string]$Exe, [string]$Id, [string]$Version, [str
 # ---------------------------------------------------------------------------
 # 0. Validate version config before changing anything
 # ---------------------------------------------------------------------------
-$arch = [System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString()
-$target = switch ($arch) { 'X64' { 'x86_64-pc-windows-msvc' } 'Arm64' { 'aarch64-pc-windows-msvc' } default { throw "Unsupported architecture: $arch" } }
+# OS architecture from the environment: RuntimeInformation.OSArchitecture can be null on Windows PowerShell 5.1.
+# A 32-bit process on 64-bit Windows sees x86 in PROCESSOR_ARCHITECTURE and the real value in PROCESSOR_ARCHITEW6432.
+$arch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
+$target = switch ($arch) { 'AMD64' { 'x86_64-pc-windows-msvc' } 'ARM64' { 'aarch64-pc-windows-msvc' } default { throw "Unsupported architecture: $arch" } }
 if ($Pinned.Uv -notmatch '^\d+\.\d+\.\d+$') { throw "Set `$Pinned.Uv to the agreed uv version (current: '$($Pinned.Uv)')." }
 if ($Pinned.UvSha256[$target] -notmatch '^[0-9a-fA-F]{64}$') { throw "Set `$Pinned.UvSha256['$target'] to the SHA256 from uv-$target.zip.sha256 of release $($Pinned.Uv)." }
 if ($Pinned.Python -notmatch '^\d+\.\d+(\.\d+)?$') { throw "Set `$Pinned.Python to a minor ('3.13') or exact ('3.13.18') version (current: '$($Pinned.Python)')." }
